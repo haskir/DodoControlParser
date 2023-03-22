@@ -50,16 +50,17 @@ def _auth_vk(driver: webdriver) -> bool:
         email_field.send_keys(email)
         password_field.send_keys(password)
         driver.find_element(By.ID, "install_allow").click()
-        if __need_code(driver):
-            return True
-        else:
-            return False
+
+        return True
+
+        # if __need_code(driver):
+        #     return True
+        # else:
+        #     return False
     except Exception as e:
         if DEBUG:
             print(f"_auth_vk Error ->\n{e}")
         return False
-    input()
-    return True
 
 
 def __need_code(driver: webdriver) -> bool:
@@ -86,17 +87,31 @@ def __need_code(driver: webdriver) -> bool:
 def auth_dodo() -> bool:
     have_cookies: bool = False
 
-    driver.get("https://vk.com")
-    load_cookies(driver)
-    sleep(3)
-    driver.refresh()
-    sleep(3)
+    # driver.get("https://vk.com")
+    # load_cookies(driver)
+    # sleep(3)
+    # driver.refresh()
+    # sleep(3)
+
     driver.get(dodo_url)
+
+    # Кликнуть на кнопку войти в lk.dodocontrol.ru
     button_in_dodo = r'//*[@id="root"]/div[1]/div/form/div/div/a[1]'
     WebDriverWait(driver, 10).until(expected_conditions.presence_of_element_located((By.XPATH, button_in_dodo)))
     driver.find_element(By.XPATH, button_in_dodo).click()
-    sleep(3)
+    sleep(2)
 
+    # Ввести креды от VK
+    load_dotenv()
+    email: str = getenv('email')
+    password: str = getenv('password')
+    email_field = driver.find_element(By.NAME, "email")
+    password_field = driver.find_element(By.NAME, "pass")
+    email_field.send_keys(email)
+    password_field.send_keys(password)
+    driver.find_element(By.ID, "install_allow").click()
+
+    return True
     # if is_exists(cookies_path):
     #     print("Загружаю куки")
     #     have_cookies = load_cookies(driver)
@@ -109,11 +124,28 @@ def auth_dodo() -> bool:
     #     _auth_vk(driver)
 
 
+def search_available(driver: webdriver) -> None | dict:
+    return {pizzeria.find_element(By.TAG_NAME, "h2").text:
+                {temp.find_element(By.CLASS_NAME, "type__name").text:
+                     temp.find_element(By.CLASS_NAME, "type__date").text
+                 for temp in pizzeria.find_elements(By.CLASS_NAME, "col-sm-4")}
+            for pizzeria in driver.find_elements(By.CLASS_NAME, "pizzeria__list")}
+
+
 def main():
-    if auth_dodo():
-        print("Я зашёл")
-    else:
+    if not auth_dodo():
         print("Что-то пошло не так")
+        return
+    print("Я зашёл")
+    input("Жду, когда начать сканить элементы в додо\n")
+    result = search_available(driver)
+    for pizzeria, dicti in result.items():
+        if "Воронеж" in pizzeria:
+            print(pizzeria)
+            for key, value in dicti.items():
+                if key != "Инспекция":
+                    print(key, value, sep=" -> ", end="\t")
+            print("\n\n")
 
 
 if __name__ == "__main__":
@@ -122,3 +154,8 @@ if __name__ == "__main__":
     cookies_path = "cookies.pkl"
     dodo_url = "https://lk.dodocontrol.ru/login"
     main()
+    input("Закрыть браузер?")
+    try:
+        driver.close()
+    except:
+        ...
