@@ -87,14 +87,18 @@ def auth_dodo() -> bool:
     button_in_dodo = r'//*[@id="root"]/div[1]/div/form/div/div/a[1]'
     WebDriverWait(driver, 10).until(expected_conditions.presence_of_element_located((By.XPATH, button_in_dodo)))
     driver.find_element(By.XPATH, button_in_dodo).click()
-    sleep(2)
+    sleep(5)
 
     # Уже вошёл
-    try:
-        driver.find_element(By.CLASS_NAME, "col-sm-12").find_element(By.TAG_NAME, "h1")
+    print(driver.current_url)
+    if "https://lk.dodocontrol.ru/checkRequests" in driver.current_url:
+        print("Я зашёл")
+        if "Следующую проверку ты сможешь занять" in driver.find_element(By.CLASS_NAME, "wrapper").text:
+            print("Проверка уже была :)")
+            return False
         return True
     # Надо войти через VK
-    except Exception as E:
+    else:
         print("Need to LOG IN")
         if _auth_vk(driver):
             return True
@@ -113,7 +117,6 @@ def main():
     if not auth_dodo():
         print("Что-то пошло не так")
         return
-    print("Я зашёл")
     input("Жду, когда начать сканить элементы в додо\n")
     result = search_available(driver)
     for pizzeria, dicti in result.items():
