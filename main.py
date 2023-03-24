@@ -74,8 +74,6 @@ def __need_code(driver: webdriver) -> bool:
                 if len(driver.find_element(By.NAME, "code").get_attribute("value")) == 6:
                     submit_button = driver.find_element(By.CSS_SELECTOR, "[type=submit]")
                     submit_button.click()
-                    # input("Press Enter to save cookies")
-                    # save_cookies(driver)
                     return True
         except Exception as e:
             if DEBUG:
